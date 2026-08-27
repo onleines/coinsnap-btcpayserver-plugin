@@ -2,7 +2,7 @@
 
 **Accept Lightning payments with BTCPay Server without running your own Lightning node.**
 
-Coinsnap Wallet for BTCPay Server is a receive-only Lightning integration that lets a BTCPay merchant send Lightning payments directly to a Coinsnap Wallet.
+Coinsnap Wallet for BTCPay Server is a receive-only Lightning integration that lets a BTCPay merchant send Lightning payments directly to a Coinsnap Wallet (https://coinsnap.io/wallet).
 
 The merchant only needs a Coinsnap Lightning Address such as:
 
