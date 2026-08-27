@@ -1,0 +1,111 @@
+@using BTCPayServer.Lightning
+@model LightningNodeViewModel
+@{
+    if (Model.CryptoCode != "BTC")
+    {
+        return;
+    }
+
+    var isCoinsnap = Model.ConnectionString?.StartsWith("type=coinsnap;", StringComparison.OrdinalIgnoreCase) is true;
+    var lightningAddress = "";
+    if (isCoinsnap)
+    {
+        try
+        {
+            var values = LightningConnectionStringHelper.ExtractValues(Model.ConnectionString!, out _);
+            values.TryGetValue("ln-address", out lightningAddress);
+        }
+        catch
+        {
+            lightningAddress = "";
+        }
+    }
+}
+
+<div id="CoinsnapSetup"
+     class="pt-3 tab-pane fade @(isCoinsnap ? "show active" : "")"
+     role="tabpanel"
+     aria-labelledby="LightningNodeType-Coinsnap"
+     data-store-id="@Model.StoreId">
+    <h2 class="h4">Coinsnap Wallet</h2>
+    <p>Receive Lightning payments directly to your Coinsnap Wallet without running a Lightning node.</p>
+
+    <div class="form-group">
+        <label for="CoinsnapLightningAddress" class="form-label">Lightning Address</label>
+        <input id="CoinsnapLightningAddress"
+               type="text"
+               inputmode="email"
+               autocomplete="off"
+               spellcheck="false"
+               class="form-control"
+               value="@lightningAddress"
+               placeholder="yourname@coinsnap.app"
+               aria-describedby="CoinsnapLightningAddressHelp" />
+        <div id="CoinsnapLightningAddressHelp" class="form-text">
+            Enter the Lightning Address of the Coinsnap Wallet account where you want to receive payments.
+        </div>
+        <span asp-validation-for="ConnectionString" class="text-danger"></span>
+    </div>
+
+    <div class="mt-3">
+        <div><code>yourname@coinsnap.app</code> — Bitcoin account</div>
+        <div><code>yourname.usd@coinsnap.app</code> — Dollars account</div>
+    </div>
+
+    <div class="alert alert-info mt-4 mb-3" role="note">
+        <strong>Receive only.</strong> BTCPay Server cannot access or spend funds from your Coinsnap Wallet.
+        No Coinsnap Merchant account is required.
+    </div>
+
+    <button id="CoinsnapTest" name="command" type="submit" value="test" class="btn btn-secondary">
+        Test connection
+    </button>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const panel = document.getElementById("CoinsnapSetup");
+        const coinsnapTab = document.getElementById("LightningNodeType-Coinsnap");
+        const customTab = document.getElementById("LightningNodeType-Custom");
+        const addressInput = document.getElementById("CoinsnapLightningAddress");
+        const connection = document.getElementById("ConnectionString");
+        const form = panel && panel.closest("form");
+        if (!panel || !coinsnapTab || !addressInput || !connection || !form) return;
+
+        const buildConnection = function () {
+            const address = addressInput.value.trim();
+            if (!address) {
+                connection.value = "";
+                return;
+            }
+            let value = "type=coinsnap;ln-address=" + address + ";";
+            const storeId = panel.dataset.storeId;
+            if (storeId) value += "store-id=" + storeId + ";";
+            connection.value = value;
+        };
+
+        if (@(isCoinsnap ? "true" : "false")) {
+            const customPanel = document.getElementById("CustomSetup");
+            coinsnapTab.checked = true;
+            coinsnapTab.classList.add("active");
+            if (customTab) customTab.classList.remove("active");
+            if (customPanel) customPanel.classList.remove("show", "active");
+            panel.classList.add("show", "active");
+        }
+
+        addressInput.addEventListener("input", buildConnection);
+        form.addEventListener("submit", function () {
+            if (coinsnapTab.checked) buildConnection();
+        });
+        if (customTab) {
+            customTab.addEventListener("change", function () {
+                if (customTab.checked && connection.value.toLowerCase().startsWith("type=coinsnap;")) {
+                    connection.value = "";
+                }
+            });
+        }
+        coinsnapTab.addEventListener("change", function () {
+            if (coinsnapTab.checked) buildConnection();
+        });
+    });
+</script>
